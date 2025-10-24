@@ -35,7 +35,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra
-        run: terraform init -input=false
+        run: terraform init -input=false -reconfigure
 
       - name: Terraform Validate
         working-directory: infra

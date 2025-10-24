@@ -8,8 +8,12 @@ terraform {
     }
   }
 
-  backend "local" {
-    path = "terraform.tfstate"
+  backend "s3" {
+    bucket         = "resume-analyzer-terraform-state"
+    key            = "infra/terraform.tfstate"
+    region         = "ap-south-1"
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table"
   }
 }
 
@@ -18,3 +22,4 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
+

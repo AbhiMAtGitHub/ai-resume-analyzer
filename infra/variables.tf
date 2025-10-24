@@ -10,6 +10,12 @@ variable "project_name" {
   default     = "resume-analyzer"
 }
 
+variable "environment" {
+  description = "Environment name (dev, test, prod)"
+  type        = string
+  default     = "dev"
+}
+
 variable "bucket_name" {
   description = "S3 bucket name for Resume Analyzer project"
   type        = string
