@@ -26,9 +26,6 @@ resource "aws_kms_key" "resume_analyzer_key" {
   }
 }
 
-# Get current AWS account info
-data "aws_caller_identity" "current" {}
-
 # Alias for readability
 resource "aws_kms_alias" "resume_analyzer_alias" {
   name          = "alias/resume-analyzer-key"
