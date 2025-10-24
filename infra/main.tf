@@ -9,8 +9,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "resume-analyzer-terraform-state"
-    key            = "infra/terraform.tfstate"
+    bucket         = "ai-resume-analyzer-bucket"
+    key            = "terraform/state/infra.tfstate"
     region         = "ap-south-1"
     encrypt        = true
     dynamodb_table = "terraform-lock-table"
