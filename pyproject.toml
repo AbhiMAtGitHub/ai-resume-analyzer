@@ -1,0 +1,123 @@
+[project]
+name = "prototype-project"
+version = "1.0.0"
+description = "Serverless AI project using AWS Lambda, Terraform, and Docker — managed with uv"
+authors = [
+    { name = "Abhishek M", email = "youremail@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+
+# Base dependencies shared by all Lambdas
+dependencies = [
+    "boto3==1.34.133",
+    "pandas==2.2.2",
+    "python-dotenv==1.0.1",
+    "pydantic==2.8.2",
+    "typing-extensions==4.12.2",
+    "aws-lambda-powertools==3.15.1",
+]
+
+# Lambda-specific and local dependency groups
+[dependency-groups]
+lambda_1 = [
+    "requests==2.32.3",
+    "botocore==1.34.133",
+]
+
+lambda_2 = [
+    "fastapi==0.115.4",
+    "uvicorn==0.30.6",
+    "mangum==0.17.0", 
+]
+
+lambda_3 = [
+    "openai==1.51.0",
+    "tenacity==9.0.0",
+]
+
+local = [
+    "pytest==8.3.3",
+    "pytest-mock==3.14.0",
+    "moto==5.0.13",
+    "black==24.10.0",
+    "ruff==0.6.9",
+    "mypy==1.13.0",
+    "boto3-stubs==1.34.133",
+    "types-requests==2.32.0.20241016",
+]
+
+# Build System
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Ruff Configuration (Lint + Format + Copyright + Complexity)
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+indent-width = 4
+fix = true
+unsafe-fixes = true
+show-fixes = true
+
+exclude = [
+    ".venv",
+    "build",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "deploy",
+    "docker",
+    "docs",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "lambdas",
+    "src",
+    "README.md",
+    "pyproject.toml"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "A",    # builtins safety
+    "TRY",  # try/except anti-patterns
+    "C90",  # cognitive complexity
+    "N",    # naming conventions
+    "CPY",  # copyright headers
+]
+ignore = [
+    "E501",  # line too long (formatter handles it)
+    "B008",  # mutable default args
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-copyright]
+author = "Abhishek M"
+notice-rgx = "Copyright \\(c\\) 2025 Abhishek M\\. All rights reserved\\."
+min-file-size = 1
+
+[tool.ruff.lint.isort]
+known-first-party = ["lambdas", "src"]
+combine-as-imports = true
+force-single-line = false
+lines-after-imports = 2
