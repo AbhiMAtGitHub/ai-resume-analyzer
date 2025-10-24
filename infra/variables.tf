@@ -13,11 +13,11 @@ variable "project_name" {
 variable "bucket_name" {
   description = "S3 bucket name for Resume Analyzer project"
   type        = string
-  default     = "resume-analyzer-bucket"
+  default     = "ai-resume-analyzer-bucket"
 }
 
 variable "bucket_force_destroy" {
-  description = "Force destroy the bucket on terraform destroy (useful for dev/testing)"
+  description = "Force destroy the bucket on terraform destroy"
   type        = bool
   default     = true
 }
