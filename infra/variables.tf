@@ -25,7 +25,7 @@ variable "bucket_name" {
 variable "bucket_force_destroy" {
   description = "Force destroy the bucket on terraform destroy"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "bucket_tags" {

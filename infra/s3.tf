@@ -44,3 +44,15 @@ output "s3_bucket_name" {
 output "s3_bucket_arn" {
   value = aws_s3_bucket.resume_analyzer_bucket.arn
 }
+
+resource "aws_s3_bucket" "resume_analyzer_bucket" {
+  bucket        = "ai-resume-analyzer-bucket"
+  force_destroy = var.bucket_force_destroy
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [bucket]
+  }
+
+  tags = var.bucket_tags
+}

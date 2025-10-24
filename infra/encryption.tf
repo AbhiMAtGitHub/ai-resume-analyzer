@@ -28,7 +28,7 @@ resource "aws_kms_key" "ai-resume_analyzer_key" {
 
 # Alias for readability
 resource "aws_kms_alias" "resume_analyzer_alias" {
-  name          = "alias/${var.project_name}-${var.bucket_tags["Environment"]}-key"
+  name          = "alias/resume-analyzer-dev-key-v2"
   target_key_id = aws_kms_key.ai-resume_analyzer_key.id
 }
 
