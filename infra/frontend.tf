@@ -1,13 +1,8 @@
-# FRONTEND INFRA - ECS Fargate for Streamlit App
-data "aws_kms_key" "ai_resume_analyzer_key" {
-  key_id = aws_kms_key.project_key.id
-}
-
 # CloudWatch Logs (encrypted)
 resource "aws_cloudwatch_log_group" "frontend_logs" {
   name              = "/ecs/${var.project_name}-${var.environment}-frontend"
   retention_in_days = 14
-  kms_key_id        = data.aws_kms_key.project_kms.arn
+  kms_key_id        = aws_kms_key.ai_resume_analyzer_key.arn
 
   tags = {
     Project     = var.project_name
