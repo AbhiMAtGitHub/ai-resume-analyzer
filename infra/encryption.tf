@@ -15,6 +15,21 @@ resource "aws_kms_key" "ai_resume_analyzer_key" {
         },
         Action   = "kms:*",
         Resource = "*"
+      },
+      {
+        Sid      = "Allow CloudWatch Logs to use the key",
+        Effect   = "Allow",
+        Principal = {
+          Service = "logs.${var.aws_region}.amazonaws.com"
+        },
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        Resource = "*"
       }
     ]
   })
