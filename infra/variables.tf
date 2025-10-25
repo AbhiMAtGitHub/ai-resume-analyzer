@@ -37,35 +37,3 @@ variable "bucket_tags" {
     ManagedBy   = "Terraform"
   }
 }
-
-
-# Frontend Configuration
-variable "frontend_container_port" {
-  description = "Port exposed by the Streamlit container"
-  type        = number
-  default     = 8501
-}
-
-variable "frontend_desired_count" {
-  description = "Number of Fargate tasks for frontend"
-  type        = number
-  default     = 1
-}
-
-variable "frontend_cpu" {
-  description = "Fargate CPU units (256 = 0.25 vCPU)"
-  type        = number
-  default     = 256
-}
-
-variable "frontend_memory" {
-  description = "Fargate memory in MiB"
-  type        = number
-  default     = 512
-}
-
-variable "frontend_api_base_url" {
-  description = "Backend API Gateway endpoint consumed by the frontend"
-  type        = string
-  default     = "https://api.resumeanalyzer.com"
-}
