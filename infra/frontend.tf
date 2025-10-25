@@ -1,5 +1,5 @@
 # FRONTEND INFRA - ECS Fargate for Streamlit App
-data "aws_kms_key" "project_kms" {
+data "aws_kms_key" "ai_resume_analyzer_key" {
   key_id = aws_kms_key.project_key.id
 }
 
