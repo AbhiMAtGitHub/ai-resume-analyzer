@@ -22,15 +22,3 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
-
-
-# Frontend Global Config
-module "frontend" {
-  source = "./"
-
-  project_name = var.project_name
-  environment  = var.environment
-  aws_region   = var.aws_region
-}
-
-
