@@ -1,0 +1,85 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - "**"
+    paths:
+      - "infra/**"
+      - "docker/Dockerfile.frontend"
+      - ".github/workflows/deploy-frontend.yaml"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PROJECT_NAME: resume-analyzer
+  ENVIRONMENT: dev
+  AWS_REGION: ap-south-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Clean Terraform cache
+        run: |
+          cd infra
+          rm -rf .terraform .terraform.lock.hcl
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init -input=false -reconfigure
+
+      - name: Terraform Validate
+        working-directory: infra
+        run: terraform validate
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -auto-approve -input=false
+
+      - name: Build and push frontend Docker image
+        run: |
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-frontend:latest
+          echo "Building image: $IMAGE_URI"
+          docker build -f docker/frontend.Dockerfile -t $IMAGE_URI .
+          docker push $IMAGE_URI
+
+      - name: Force ECS Service redeploy
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-frontend-cluster \
+            --service ${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-frontend-svc \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Get ECS Task Public IP
+        run: |
+          CLUSTER=${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-frontend-cluster
+          SERVICE=${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-frontend-svc
+          echo "Fetching Public IP of Fargate task..."
+          TASK_ARN=$(aws ecs list-tasks --cluster $CLUSTER --service-name $SERVICE --region ${{ env.AWS_REGION }} --query "taskArns[0]" --output text)
+          PUBLIC_IP=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN --region ${{ env.AWS_REGION }} \
+            --query "tasks[0].attachments[0].details[?name=='publicIPv4Address'].value" --output text)
+          echo "Streamlit App URL: http://$PUBLIC_IP:8501"

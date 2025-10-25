@@ -1,0 +1,20 @@
+{
+  // 🧠 Python environment
+  "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+
+  // 🦀 Ruff configuration — native server only
+  "ruff.enable": true,
+  "ruff.nativeServer": true,                // ✅ Force new native server
+  "ruff.lint.enable": true,                 // ✅ Linting on
+  "ruff.lint.preview": true,                // ✅ Required for CPY
+  "ruff.format.enable": true,               // ✅ Formatter
+  "ruff.fixAll": true,                      // ✅ Auto-fix simple issues
+  "ruff.organizeImports": true,             // ✅ Keep imports clean
+
+  // 🧹 Editor integration
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "editor.formatOnSave": true,
+
+  // ⚙️ Optional: ignore .venv from file explorer
+  "files.exclude": { "**/.venv": true }
+}

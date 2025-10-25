@@ -29,14 +29,18 @@ lambda_1 = [
 lambda_2 = [
     "fastapi==0.115.4",
     "uvicorn==0.30.6",
-    "mangum==0.17.0", 
+    "mangum==0.17.0",
 ]
 
 lambda_3 = [
     "openai==1.51.0",
     "tenacity==9.0.0",
 ]
-
+frontend = [
+    "streamlit==1.40.1",
+    "requests==2.32.3",
+    "python-dotenv==1.0.1"
+]
 local = [
     "pytest==8.3.3",
     "pytest-mock==3.14.0",
@@ -53,8 +57,15 @@ local = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# Ruff Configuration (Lint + Format + Copyright + Complexity)
+[tool.hatch.build.targets.wheel]
+include = [
+    "lambdas",
+    "src",
+    "README.md",
+    "pyproject.toml"
+]
 
+# Ruff Configuration
 [tool.ruff]
 target-version = "py311"
 line-length = 100
@@ -62,6 +73,7 @@ indent-width = 4
 fix = true
 unsafe-fixes = true
 show-fixes = true
+preview = true
 
 exclude = [
     ".venv",
@@ -81,19 +93,11 @@ indent-style = "space"
 line-ending = "lf"
 skip-magic-trailing-comma = false
 
-[tool.hatch.build.targets.wheel]
-include = [
-    "lambdas",
-    "src",
-    "README.md",
-    "pyproject.toml"
-]
-
 [tool.ruff.lint]
 select = [
     "E",    # pycodestyle
     "F",    # pyflakes
-    "I",    # isort
+    "I",    # import sorting
     "B",    # flake8-bugbear
     "UP",   # pyupgrade
     "A",    # builtins safety
@@ -102,10 +106,6 @@ select = [
     "N",    # naming conventions
     "CPY",  # copyright headers
 ]
-ignore = [
-    "E501",  # line too long (formatter handles it)
-    "B008",  # mutable default args
-]
 fixable = ["ALL"]
 
 [tool.ruff.lint.mccabe]
@@ -113,7 +113,7 @@ max-complexity = 10
 
 [tool.ruff.lint.flake8-copyright]
 author = "Abhishek M"
-notice-rgx = "Copyright \\(c\\) 2025 Abhishek M\\. All rights reserved\\."
+notice-rgx = "^(# *)?(Copyright \\(c\\) 2025 Abhishek M\\. All rights reserved\\.)"
 min-file-size = 1
 
 [tool.ruff.lint.isort]
