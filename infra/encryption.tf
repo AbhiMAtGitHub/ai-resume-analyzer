@@ -43,7 +43,7 @@ resource "aws_kms_key" "ai_resume_analyzer_key" {
 
 # Alias for readability
 resource "aws_kms_alias" "resume_analyzer_alias" {
-  name          = "alias/resume-analyzer-dev-key-v2"
+  name          = "alias/resume-analyzer-dev-key-v1"
   target_key_id = aws_kms_key.ai_resume_analyzer_key.id
 }
 
