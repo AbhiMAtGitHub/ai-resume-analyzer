@@ -9,7 +9,7 @@ WORKDIR /var/task
 COPY pyproject.toml README.md ./
 
 # ---- Install system build dependencies (for numpy/pandas, etc.) ----
-RUN yum install -y gcc g++ make && yum clean all
+RUN yum install -y gcc gcc-c++ make && yum clean all
 
 # ---- Install uv (modern dependency manager) ----
 RUN pip install --no-cache-dir uv
@@ -23,7 +23,6 @@ COPY resume_analyzer/commons ./resume_analyzer/commons
 COPY resume_analyzer/lambdas/file_handler ./resume_analyzer/lambdas/file_handler
 
 # ---- Environment Variables ----
-# Optional but useful for logging and monitoring
 ENV PYTHONUNBUFFERED=1
 ENV AWS_REGION=ap-south-1
 ENV POWERTOOLS_SERVICE_NAME=file_handler
