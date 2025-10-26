@@ -31,6 +31,7 @@ variable "bucket_force_destroy" {
 variable "file_handler_image_uri" {
   description = "ECR image URI for the file_handler Lambda"
   type        = string
+  default     = "245595379715.dkr.ecr.ap-south-1.amazonaws.com/resume-analyzer-file-handler:20251026T164504Z"
 }
 
 variable "bucket_tags" {
