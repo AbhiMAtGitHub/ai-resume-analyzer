@@ -67,6 +67,7 @@ resource "aws_iam_role_policy" "file_handler_ecr_pull" {
       {
         Effect = "Allow",
         Action = [
+          "ecr:GetAuthorizationToken",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
           "ecr:BatchCheckLayerAvailability"
