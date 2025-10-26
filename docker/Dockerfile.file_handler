@@ -8,17 +8,19 @@ WORKDIR /var/task
 # ---- Copy dependency definitions ----
 COPY pyproject.toml README.md ./
 
-# ---- Install system build dependencies (for numpy/pandas, etc.) ----
+# ---- Install system build dependencies (for C extensions if needed) ----
 RUN yum install -y gcc gcc-c++ make && yum clean all
 
 # ---- Install uv (modern dependency manager) ----
 RUN pip install --no-cache-dir uv
 
+# ---- Pre-install compatible prebuilt wheels for NumPy/Pandas ----
+RUN pip install --no-cache-dir "numpy<2.0" "pandas==2.2.2"
+
 # ---- Install only the base + file_handler dependency groups ----
 RUN uv pip install --system --no-cache-dir -e . --group file_handler
 
 # ---- Copy only the required source code ----
-# Includes both commons and this Lambda's code
 COPY resume_analyzer/commons ./resume_analyzer/commons
 COPY resume_analyzer/lambdas/file_handler ./resume_analyzer/lambdas/file_handler
 
