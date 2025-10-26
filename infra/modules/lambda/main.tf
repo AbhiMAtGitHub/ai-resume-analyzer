@@ -42,3 +42,33 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
     "Environment" = var.environment
   }
 }
+
+# Allow Lambda to pull container images from ECR
+resource "aws_iam_role_policy" "lambda_ecr_pull" {
+  name = "${var.lambda_name}-ecr-pull-policy"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
