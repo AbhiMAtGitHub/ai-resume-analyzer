@@ -1,0 +1,118 @@
+name: Build & Push Lambda Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      lambda:
+        description: "Lambda to build & deploy"
+        type: choice
+        required: true
+        options:
+          - file_handler
+          - start_pdf_text_extraction
+      tag:
+        description: "Image tag (defaults to short SHA)"
+        required: false
+        default: ""
+      publish_version:
+        description: "Publish new Lambda version?"
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+
+jobs:
+  build-push-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/resume-analyzer-dev-oidc-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Derive metadata
+        id: meta
+        run: |
+          # 1) Map selection → Dockerfile, ECR repo, Lambda func name
+          LAMBDA="${{ inputs.lambda }}"
+          case "$LAMBDA" in
+            file_handler)
+              DOCKERFILE="docker/Dockerfile.file_handler"
+              LAMBDA_FUNC="resume-analyzer-dev-file-handler-lambda"
+              ECR_REPO="resume-analyzer-file-handler"
+              ;;
+            start_pdf_text_extraction)
+              DOCKERFILE="docker/Dockerfile.start_pdf_text_extraction"
+              LAMBDA_FUNC="resume-analyzer-dev-start-pdf-text-extraction-lambda"
+              ECR_REPO="resume-analyzer-start-pdf-text-extraction"
+              ;;
+            *)
+              echo "Unknown lambda selection: $LAMBDA" >&2
+              exit 1
+              ;;
+          esac
+          echo "dockerfile=$DOCKERFILE" >> $GITHUB_OUTPUT
+          echo "lambda_func=$LAMBDA_FUNC" >> $GITHUB_OUTPUT
+          echo "ecr_repo=$ECR_REPO" >> $GITHUB_OUTPUT
+
+          # 2) Compute registry + tag
+          ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          REGION="${{ env.AWS_REGION }}"
+          REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_SHA::7}"; fi
+          # Also add a timestamp tag
+          TS_TAG="$(date -u +'%Y%m%dT%H%M%SZ')"
+          echo "registry=$REGISTRY"   >> $GITHUB_OUTPUT
+          echo "tag=$TAG"             >> $GITHUB_OUTPUT
+          echo "timestamp_tag=$TS_TAG" >> $GITHUB_OUTPUT
+
+      - name: Ensure ECR repository exists
+        run: |
+          set -e
+          aws ecr describe-repositories --repository-names "${{ steps.meta.outputs.ecr_repo }}" >/dev/null 2>&1 || \
+          aws ecr create-repository \
+            --repository-name "${{ steps.meta.outputs.ecr_repo }}" \
+            --image-scanning-configuration scanOnPush=true \
+            --encryption-configuration encryptionType=KMS
+          echo "ECR repository ready: ${{ steps.meta.outputs.ecr_repo }}"
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ steps.meta.outputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:${{ steps.meta.outputs.timestamp_tag }}
+          cache-from: type=registry,ref=${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:buildcache
+          cache-to: type=registry,ref=${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:buildcache,mode=max
+
+      - name: Update Lambda to new image
+        id: update
+        run: |
+          IMAGE_URI="${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:${{ steps.meta.outputs.tag }}"
+          echo "Updating ${{ steps.meta.outputs.lambda_func }} to image: ${IMAGE_URI}"
+          aws lambda update-function-code \
+            --function-name "${{ steps.meta.outputs.lambda_func }}" \
+            --image-uri "${IMAGE_URI}" >/tmp/update.json
+          cat /tmp/update.json
+          echo "image_uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
+
+      - name: Optionally publish new version
+        if: ${{ inputs.publish_version }}
+        run: |
+          aws lambda publish-version --function-name "${{ steps.meta.outputs.lambda_func }}"

@@ -1,0 +1,30 @@
+# © 2025 Abhishek M. All rights reserved.
+# ---- Base Image ----
+FROM public.ecr.aws/lambda/python:3.11 AS base
+
+# ---- Set working directory ----
+WORKDIR /var/task
+
+# ---- Copy dependency definitions ----
+COPY pyproject.toml README.md ./
+
+# ---- Install uv (modern dependency manager) ----
+RUN pip install --no-cache-dir uv
+
+# ---- Install only the base + file_handler dependency groups ----
+RUN uv pip install --no-cache-dir -e . --group file_handler
+
+# ---- Copy only the required source code ----
+# Includes both commons and this Lambda's code
+COPY resume_analyzer/commons ./resume_analyzer/commons
+COPY resume_analyzer/lambdas/file_handler ./resume_analyzer/lambdas/file_handler
+
+# ---- Environment Variables ----
+# Optional but useful for logging and monitoring
+ENV PYTHONUNBUFFERED=1
+ENV AWS_REGION=ap-south-1
+ENV POWERTOOLS_SERVICE_NAME=file_handler
+ENV POWERTOOLS_LOG_LEVEL=INFO
+
+# ---- Set the Lambda handler ----
+CMD ["resume_analyzer.lambdas.file_handler.handler.lambda_handler"]

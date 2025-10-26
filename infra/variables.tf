@@ -28,6 +28,12 @@ variable "bucket_force_destroy" {
   default     = false
 }
 
+variable "file_handler_image_uri" {
+  description = "ECR image URI for the file_handler Lambda"
+  type        = string
+  default     = "123456789012.dkr.ecr.ap-south-1.amazonaws.com/dummy:file_handler-latest"
+}
+
 variable "bucket_tags" {
   description = "Tags for the S3 bucket"
   type        = map(string)
