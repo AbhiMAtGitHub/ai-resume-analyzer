@@ -56,6 +56,27 @@ resource "aws_iam_role_policy" "file_handler_policy" {
   })
 }
 
+# Allow Lambda to pull container images from ECR
+resource "aws_iam_role_policy" "file_handler_ecr_pull" {
+  name = "resume-analyzer-dev-file-handler-ecr-pull"
+  role = aws_iam_role.file_handler_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Lambda Function
 module "file_handler_lambda" {
   source        = "./modules/lambda"
