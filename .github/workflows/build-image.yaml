@@ -98,8 +98,6 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:${{ steps.meta.outputs.tag }}
             ${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:${{ steps.meta.outputs.timestamp_tag }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:buildcache
-          cache-to: type=registry,ref=${{ steps.meta.outputs.registry }}/${{ steps.meta.outputs.ecr_repo }}:buildcache,mode=max
 
       - name: Update Lambda to new image
         id: update
