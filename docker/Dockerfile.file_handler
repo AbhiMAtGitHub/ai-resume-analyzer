@@ -12,7 +12,7 @@ COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir uv
 
 # ---- Install only the base + file_handler dependency groups ----
-RUN uv pip install --no-cache-dir -e . --group file_handler
+RUN uv pip install --system --no-cache-dir -e . --group file_handler
 
 # ---- Copy only the required source code ----
 # Includes both commons and this Lambda's code
