@@ -1,4 +1,4 @@
-# © 2025 Abhishek M. All rights reserved.
+# Copyright (c) 2025 Abhishek M. All rights reserved.
 
 import os
 import time
