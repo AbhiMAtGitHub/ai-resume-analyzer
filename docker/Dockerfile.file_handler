@@ -8,6 +8,9 @@ WORKDIR /var/task
 # ---- Copy dependency definitions ----
 COPY pyproject.toml README.md ./
 
+# ---- Install system build dependencies (for numpy/pandas, etc.) ----
+RUN yum install -y gcc g++ make && yum clean all
+
 # ---- Install uv (modern dependency manager) ----
 RUN pip install --no-cache-dir uv
 
