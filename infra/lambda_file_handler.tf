@@ -80,7 +80,7 @@ module "file_handler_lambda" {
 
 # Optional: CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "file_handler_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.file_handler.function_name}"
+  name              = "/aws/lambda/${module.file_handler_lambda.lambda_name}"
   retention_in_days = 14
   kms_key_id        = aws_kms_key.ai_resume_analyzer_key.arn
 }

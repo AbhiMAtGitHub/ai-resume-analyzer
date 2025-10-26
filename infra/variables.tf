@@ -28,6 +28,11 @@ variable "bucket_force_destroy" {
   default     = false
 }
 
+variable "file_handler_image_uri" {
+  description = "ECR image URI for the file_handler Lambda"
+  type        = string
+}
+
 variable "bucket_tags" {
   description = "Tags for the S3 bucket"
   type        = map(string)
