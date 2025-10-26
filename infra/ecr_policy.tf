@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 data "aws_ecr_repository" "file_handler_repo" {
   name = "resume-analyzer-file-handler"
 }
