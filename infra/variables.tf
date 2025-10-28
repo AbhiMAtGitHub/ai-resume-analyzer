@@ -69,12 +69,14 @@ variable "apigw_stage_name" {
   default     = "dev"
 }
 
-# Ensure default_tags already exist; if not, define:
-# variable "default_tags" {
-#   type = map(string)
-#   default = {
-#     Environment = "dev"
-#     Project     = "resume-analyzer"
-#     ManagedBy   = "Terraform"
-#   }
-# }
+# Default tagging convention for all resources
+variable "default_tags" {
+  description = "Default resource tags applied to all resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Project     = "resume-analyzer"
+    ManagedBy   = "Terraform"
+  }
+}
+
