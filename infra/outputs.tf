@@ -4,17 +4,6 @@ output "processing_queue_url" {
   value       = aws_sqs_queue.resume_analyzer_processing_queue.url
 }
 
-# S3 Bucket details
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket used for file uploads"
-  value       = aws_s3_bucket.resume_analyzer_bucket.bucket
-}
-
-output "s3_bucket_arn" {
-  description = "ARN of the S3 bucket used for file uploads"
-  value       = aws_s3_bucket.resume_analyzer_bucket.arn
-}
-
 # ECR Repository for Lambda container
 output "ecr_repository_url" {
   description = "ECR repository URL for the File Handler image"
