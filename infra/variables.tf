@@ -28,12 +28,6 @@ variable "bucket_force_destroy" {
   default     = false
 }
 
-variable "file_handler_image_uri" {
-  description = "ECR image URI for the file_handler Lambda"
-  type        = string
-  default     = "245595379715.dkr.ecr.ap-south-1.amazonaws.com/resume-analyzer-file-handler:20251026T164504Z"
-}
-
 variable "bucket_tags" {
   description = "Tags for the S3 bucket"
   type        = map(string)
@@ -43,3 +37,44 @@ variable "bucket_tags" {
     ManagedBy   = "Terraform"
   }
 }
+
+
+variable "project_slug" {
+  description = "Short slug used to name resources"
+  type        = string
+  default     = "resume-analyzer"
+}
+
+variable "file_handler_image_tag" {
+  description = "Docker image tag to deploy for the file-handler Lambda"
+  type        = string
+  default     = "latest"
+}
+
+variable "presign_url_expiry_seconds" {
+  description = "Expiry (in seconds) for S3 presigned PUT URLs"
+  type        = number
+  default     = 900 # 15 minutes
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention for Lambda"
+  type        = number
+  default     = 14
+}
+
+variable "apigw_stage_name" {
+  description = "API Gateway stage name"
+  type        = string
+  default     = "dev"
+}
+
+# Ensure default_tags already exist; if not, define:
+# variable "default_tags" {
+#   type = map(string)
+#   default = {
+#     Environment = "dev"
+#     Project     = "resume-analyzer"
+#     ManagedBy   = "Terraform"
+#   }
+# }
