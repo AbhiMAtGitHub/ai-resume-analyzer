@@ -1,11 +1,12 @@
-name: Build and Push to ECR
+name: Build and Push Lambda Image
 
 on:
   workflow_dispatch:
 
   push:
     branches:
-      - "**"
+      - "main"
+      - "feature/**"
     paths:
       - "docker/**"
       - "resume_analyzer/**"
@@ -29,44 +30,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ✅ Configure AWS credentials via OIDC
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # ✅ Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Install uv (Python environment manager)
+      # ✅ Install uv (for pyproject.toml dependency context)
+      - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Cache uv environment
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: uv-${{ hashFiles('pyproject.toml') }}
-          restore-keys: uv-
-
-      - name: Build Docker image for Lambda
-        working-directory: docker
+      # ✅ Build Docker image
+      - name: Build Docker image for File Handler Lambda
         run: |
           IMAGE_TAG=build-${{ github.sha }}
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_SLUG }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-          echo "Building Docker image..."
-          docker build -t $IMAGE_URI -f Dockerfile ..
+          echo "🔨 Building Docker image from docker/Dockerfile.file_handler..."
+          docker build -t $IMAGE_URI -f docker/Dockerfile.file_handler .
 
+      # ✅ Push Docker image to ECR
       - name: Push image to Amazon ECR
         run: |
-          echo "Pushing $IMAGE_URI"
+          echo "🚀 Pushing $IMAGE_URI"
           docker push $IMAGE_URI
 
+      # ✅ Output summary
       - name: Show pushed image details
         run: |
           echo "Image pushed successfully!"
