@@ -18,6 +18,10 @@ jobs:
     name: Deploy Infra using Terraform
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: ap-south-1
+      TF_VAR_file_handler_image_tag: build-88c3bc2d1333ffdc19033908591e62e81e638a
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
