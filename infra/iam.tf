@@ -63,6 +63,17 @@ data "aws_iam_policy_document" "file_handler_inline" {
       aws_kms_key.ai_resume_analyzer_key.arn
     ]
   }
+
+    statement {
+    sid    = "ECRPullAccess"
+    effect = "Allow"
+    actions = [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+    ]
+    resources = ["*"]
+    }
 }
 
 resource "aws_iam_policy" "file_handler_inline" {
