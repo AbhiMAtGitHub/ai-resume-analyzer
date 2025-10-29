@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+.streamlit/secrets.toml
+
+.ruff_cache
+
+.vscode
