@@ -46,41 +46,15 @@ if st.button("🚀 Analyze"):
             data = response.json()
             st.write("🔍 Parsed JSON:", data)
 
-            # ✅ Extract presigned URLs correctly
+            # ✅ Extract presigned URLs from correct key
             upload_urls = data.get("upload_urls", {})
-            resume_url = upload_urls.get("resume.pdf")
-            jd_url = upload_urls.get("jd.pdf")
+
+            # Try to find resume & jd URLs dynamically (no hardcoding)
+            resume_url = next((v for k, v in upload_urls.items() if "resume" in k.lower()), None)
+            jd_url = next((v for k, v in upload_urls.items() if "jd" in k.lower()), None)
 
             if not (resume_url and jd_url):
-                st.error("❌ Lambda response missing presigned URLs.")
-                st.stop()
-
-            response = requests.post(API_URL, json={"request_id": request_id})
-            st.write("🔍 API status code:", response.status_code)
-            st.write("🔍 Raw response text:", response.text)
-
-            # check network-level failures
-            if response.status_code not in [200, 201]:
-                st.error(f"❌ API call failed with status {response.status_code}")
-                st.stop()
-
-            # parse JSON safely
-            try:
-                data = response.json()
-                st.write("🔍 Parsed JSON:", data)
-            except Exception as parse_err:
-                st.error(f"❌ Invalid JSON response: {parse_err}")
-                st.stop()
-
-            # access URLs based on your Lambda output structure
-            if "resume_upload_url" in data:
-                resume_url = data["resume_upload_url"]
-                jd_url = data["jd_upload_url"]
-            elif "presigned_urls" in data:
-                resume_url = data["presigned_urls"].get("resume")
-                jd_url = data["presigned_urls"].get("jd")
-            else:
-                st.error("❌ Missing presigned URL keys in Lambda response.")
+                st.error("❌ Lambda response missing expected upload URLs.")
                 st.stop()
 
         with st.spinner("Uploading files to S3..."):
