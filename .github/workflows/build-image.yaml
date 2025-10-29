@@ -1,0 +1,95 @@
+name: Build, Push & Update Lambda Image
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - "main"
+      - "feature/**"
+    paths:
+      - "docker/**"
+      - "resume_analyzer/**"
+      - "pyproject.toml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy-lambda:
+    name: Build, Push Image & Update Lambda
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-south-1
+      PROJECT_SLUG: resume-analyzer
+      IMAGE_NAME: file-handler
+      LAMBDA_FUNCTION_NAME: resume-analyzer-file-handler
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ✅ Configure AWS credentials via OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ✅ Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ✅ Install uv (for pyproject.toml)
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ✅ Build Docker image
+      - name: Build Docker image for Lambda
+        run: |
+          IMAGE_TAG=build-${{ github.sha }}
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_SLUG }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+          echo "🔨 Building Docker image from docker/Dockerfile.file_handler..."
+          docker build -t $IMAGE_URI -f docker/Dockerfile.file_handler .
+
+      # ✅ Push image to ECR
+      - name: Push image to Amazon ECR
+        run: |
+          echo "🚀 Pushing $IMAGE_URI"
+          docker push $IMAGE_URI
+
+      # ✅ Update Lambda to use the new image (auto-deploy)
+      - name: Update Lambda function image
+        run: |
+          echo "🔁 Updating Lambda ${LAMBDA_FUNCTION_NAME} to new image..."
+          aws lambda update-function-code \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --image-uri $IMAGE_URI \
+            --region $AWS_REGION
+
+      # ✅ Wait until update completes
+      - name: Wait for Lambda update completion
+        run: |
+          echo "⏳ Waiting for Lambda to finish deploying..."
+          aws lambda wait function-updated \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --region $AWS_REGION
+          echo "✅ Lambda now running image: $IMAGE_TAG"
+
+      # ✅ Output summary
+      - name: Summary
+        run: |
+          echo "----------------------------------------"
+          echo "✅ Lambda successfully updated!"
+          echo "Function: $LAMBDA_FUNCTION_NAME"
+          echo "Image: $IMAGE_URI"
+          echo "Region: $AWS_REGION"
+          echo "----------------------------------------"
