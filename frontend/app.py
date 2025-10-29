@@ -58,8 +58,17 @@ if st.button("🚀 Analyze"):
                 st.stop()
 
         with st.spinner("Uploading files to S3..."):
-            resume_upload = requests.put(resume_url, data=uploaded_resume.getvalue())
-            jd_upload = requests.put(jd_url, data=uploaded_jd.getvalue())
+            headers = {"Content-Type": "application/pdf"}
+
+            resume_upload = requests.put(
+                resume_url, data=uploaded_resume.getvalue(), headers=headers
+            )
+            jd_upload = requests.put(jd_url, data=uploaded_jd.getvalue(), headers=headers)
+
+        st.write("Resume upload status:", resume_upload.status_code)
+        st.write("JD upload status:", jd_upload.status_code)
+        st.write("Resume response text:", resume_upload.text)
+        st.write("JD response text:", jd_upload.text)
 
         if resume_upload.status_code == 200 and jd_upload.status_code == 200:
             st.success("✅ Files uploaded successfully!")
