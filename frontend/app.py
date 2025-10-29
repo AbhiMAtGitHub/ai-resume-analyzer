@@ -33,8 +33,11 @@ if st.button("🚀 Analyze"):
     try:
         with st.spinner("Fetching pre-signed URLs from Lambda..."):
             response = requests.post(API_URL, json={"request_id": request_id})
+            st.write("🔍 API status code:", response.status_code)
+            st.write("🔍 Raw response text:", response.text)
             response.raise_for_status()
             data = response.json()
+            st.write("🔍 Parsed JSON:", data)
             resume_url = data["resume_upload_url"]
             jd_url = data["jd_upload_url"]
 
