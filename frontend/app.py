@@ -42,6 +42,22 @@ if st.button("🚀 Analyze"):
             response = requests.post(API_URL, json={"request_id": request_id})
             st.write("🔍 API status code:", response.status_code)
             st.write("🔍 Raw response text:", response.text)
+            response.raise_for_status()
+            data = response.json()
+            st.write("🔍 Parsed JSON:", data)
+
+            # ✅ Extract presigned URLs correctly
+            upload_urls = data.get("upload_urls", {})
+            resume_url = upload_urls.get("resume.pdf")
+            jd_url = upload_urls.get("jd.pdf")
+
+            if not (resume_url and jd_url):
+                st.error("❌ Lambda response missing presigned URLs.")
+                st.stop()
+
+            response = requests.post(API_URL, json={"request_id": request_id})
+            st.write("🔍 API status code:", response.status_code)
+            st.write("🔍 Raw response text:", response.text)
 
             # check network-level failures
             if response.status_code not in [200, 201]:
