@@ -78,15 +78,12 @@ def lambda_handler(event, context):
         ]
 
         # Generate pre-signed URLs
-        presigned_urls = {}
-        for f in files:
-            file_meta = FileMetadata(**f)
-            presigned_urls[f["file_name"]] = generate_presigned_url(processing_job_id, file_meta)
+        presigned_urls = {f.file_name: generate_presigned_url(processing_job_id, f) for f in files}
 
         file_info_payload = {
             "job_id": processing_job_id,
             "bucket": S3_BUCKET,
-            "files": files,
+            "files": [f.model_dump() for f in files],
             "created_at": int(time.time() * 1000),
         }
 
