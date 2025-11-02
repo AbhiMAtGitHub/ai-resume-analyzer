@@ -1,11 +1,12 @@
 # © 2025 Abhishek M. All rights reserved.
 
 import json
+import time
 
 import boto3
 from botocore.exceptions import ClientError
 
-from resume_analyzer.commons.models import FileMetadata, FileType, JobMetadata
+from resume_analyzer.commons.models import FileMetadata, FileType
 from resume_analyzer.commons.utils import generate_unique_identity, sanitize_file_names
 from resume_analyzer.lambdas.file_handler import (
     PROCESSING_QUEUE_URL,
@@ -79,17 +80,17 @@ def lambda_handler(event, context):
         # Generate pre-signed URLs
         presigned_urls = {f.file_name: generate_presigned_url(processing_job_id, f) for f in files}
 
-        # Construct job metadata
-        job_metadata = JobMetadata(
-            job_id=processing_job_id,
-            bucket=S3_BUCKET,
-            files=files,
-        )
+        file_info_payload = {
+            "job_id": processing_job_id,
+            "bucket": S3_BUCKET,
+            "files": [f.model_dump() for f in files],
+            "created_at": int(time.time() * 1000),
+        }
 
-        message_id = sqs_service.send_job_metadata(job_metadata=job_metadata)
+        message_id = sqs_service.send_message(json.dumps(file_info_payload))
 
         logger.info(
-            "Job metadata sent to downstream SQS",
+            "File metadata sent to downstream SQS",
             extra={
                 "processing_job_id": processing_job_id,
                 "queue_url": PROCESSING_QUEUE_URL,
@@ -100,12 +101,11 @@ def lambda_handler(event, context):
         response_body = {
             "processing_job_id": processing_job_id,
             "upload_urls": presigned_urls,
-            "job_metadata": job_metadata.to_dict(),
+            "job_metadata": file_info_payload,
         }
 
         logger.info(
             "Generated presigned URLs and job metadata",
-            extra={"processing_job_id": processing_job_id, "bucket": S3_BUCKET},
         )
 
         return {
