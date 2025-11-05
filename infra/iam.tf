@@ -185,7 +185,11 @@ resource "aws_iam_role_policy_attachment" "start_pdf_text_extraction_inline_atta
 data "aws_iam_policy_document" "textract_service_assume" {
   statement {
     actions = ["sts:AssumeRole"]
-    principals { type = "Service", identifiers = ["textract.amazonaws.com"] }
+
+    principals {
+      type        = "Service"
+      identifiers = ["textract.amazonaws.com"]
+    }
   }
 }
 

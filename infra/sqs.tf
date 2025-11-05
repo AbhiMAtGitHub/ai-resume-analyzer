@@ -50,11 +50,17 @@ resource "aws_sqs_queue" "textract_notifications_queue" {
 
 data "aws_iam_policy_document" "textract_notifications_queue_policy" {
   statement {
-    sid        = "AllowSNSTopic"
-    effect     = "Allow"
-    actions    = ["SQS:SendMessage"]
-    principals { type = "Service", identifiers = ["sns.amazonaws.com"] }
-    resources  = [aws_sqs_queue.textract_notifications_queue.arn]
+    sid     = "AllowSNSTopic"
+    effect  = "Allow"
+    actions = ["SQS:SendMessage"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    resources = [aws_sqs_queue.textract_notifications_queue.arn]
+
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
@@ -62,6 +68,7 @@ data "aws_iam_policy_document" "textract_notifications_queue_policy" {
     }
   }
 }
+
 
 resource "aws_sqs_queue_policy" "textract_notifications_queue_policy" {
   queue_url = aws_sqs_queue.textract_notifications_queue.id

@@ -10,11 +10,17 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   statement {
     sid     = "AllowTextractRolePublish"
     effect  = "Allow"
-    principals { type = "AWS", identifiers = [aws_iam_role.textract_service_role.arn] }
-    actions  = ["SNS:Publish"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.textract_service_role.arn]
+    }
+
+    actions   = ["SNS:Publish"]
     resources = [aws_sns_topic.textract_notifications.arn]
   }
 }
+
 
 resource "aws_sns_topic_policy" "textract_topic_policy" {
   arn    = aws_sns_topic.textract_notifications.arn
