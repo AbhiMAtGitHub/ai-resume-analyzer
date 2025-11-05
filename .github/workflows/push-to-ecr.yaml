@@ -1,0 +1,121 @@
+name: Push Lambda Image to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Select the branch to build from"
+        required: true
+        type: choice
+        options:
+          - main
+          - feature/your-feature-branch
+        default: main
+
+      lambda_name:
+        description: "Select the Lambda function to push image for"
+        required: true
+        type: choice
+        options:
+          - file-handler
+          - start-pdf-text-extraction
+        default: file-handler
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  push-image-to-ecr:
+    name: Build & Push Lambda Image to ECR
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ap-south-1
+      PROJECT_SLUG: resume-analyzer
+
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install uv (for pyproject.toml)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # 🧠 Set metadata based on Lambda selection
+      - name: Set Lambda metadata
+        id: set-lambda
+        run: |
+          echo "Selected Lambda: ${{ github.event.inputs.lambda_name }}"
+
+          if [ "${{ github.event.inputs.lambda_name }}" = "file-handler" ]; then
+            echo "IMAGE_NAME=file-handler" >> $GITHUB_ENV
+            echo "DOCKERFILE_PATH=docker/Dockerfile.file_handler" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.lambda_name }}" = "start-pdf-text-extraction" ]; then
+            echo "IMAGE_NAME=start-pdf-text-extraction" >> $GITHUB_ENV
+            echo "DOCKERFILE_PATH=docker/Dockerfile.start_pdf_text_extraction" >> $GITHUB_ENV
+          else
+            echo "Invalid lambda_name input"
+            exit 1
+          fi
+
+          echo "✅ Build context set for ${{ github.event.inputs.lambda_name }}"
+
+      # 🧩 Ensure ECR repository exists
+      - name: Ensure ECR repository exists
+        run: |
+          REPO_NAME="${{ env.PROJECT_SLUG }}/${{ env.IMAGE_NAME }}"
+          echo "🔍 Checking if ECR repo $REPO_NAME exists..."
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" --region $AWS_REGION >/dev/null 2>&1; then
+            echo "🆕 Creating ECR repository $REPO_NAME..."
+            aws ecr create-repository \
+              --repository-name "$REPO_NAME" \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=KMS \
+              --region $AWS_REGION >/dev/null
+            echo "✅ ECR repository created: $REPO_NAME"
+          else
+            echo "✅ ECR repository already exists."
+          fi
+
+      # 🏗️ Build Docker image
+      - name: Build Docker image for Lambda
+        run: |
+          IMAGE_TAG=latest
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.PROJECT_SLUG }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+          echo "🔨 Building Docker image from $DOCKERFILE_PATH ..."
+          docker build -t $IMAGE_URI -f $DOCKERFILE_PATH .
+
+      # 🚀 Push image to Amazon ECR
+      - name: Push image to Amazon ECR
+        run: |
+          echo "🚀 Pushing $IMAGE_URI"
+          docker push $IMAGE_URI
+
+      # ✅ Summary (no Lambda update)
+      - name: Summary
+        run: |
+          echo "----------------------------------------"
+          echo "✅ Lambda image successfully pushed to ECR!"
+          echo "Lambda: ${{ github.event.inputs.lambda_name }}"
+          echo "Branch: ${{ github.event.inputs.branch }}"
+          echo "ECR Repo: ${{ env.PROJECT_SLUG }}/${{ env.IMAGE_NAME }}"
+          echo "Image Tag: latest"
+          echo "Region: $AWS_REGION"
+          echo "----------------------------------------"
