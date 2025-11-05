@@ -3,15 +3,6 @@ name: Push Lambda Image to ECR
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: "Select the branch to build from"
-        required: true
-        type: choice
-        options:
-          - main
-          - feature/your-feature-branch
-        default: main
-
       lambda_name:
         description: "Select the Lambda function to push image for"
         required: true
@@ -20,6 +11,15 @@ on:
           - file-handler
           - start-pdf-text-extraction
         default: file-handler
+
+  push:
+    branches:
+      - "main"
+      - "feature/**"
+    paths:
+      - "docker/**"
+      - "resume_analyzer/**"
+      - "pyproject.toml"
 
 permissions:
   id-token: write
