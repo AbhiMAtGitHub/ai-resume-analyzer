@@ -1,0 +1,34 @@
+# © 2025 Abhishek M. All rights reserved.
+# ---- Base Image ----
+FROM public.ecr.aws/lambda/python:3.11 AS base
+
+# ---- Set working directory ----
+WORKDIR /var/task
+
+# ---- Copy dependency definitions ----
+COPY pyproject.toml README.md ./
+
+# ---- Install system build dependencies (for C extensions if needed) ----
+RUN yum install -y gcc gcc-c++ make && yum clean all
+
+# ---- Install uv (modern dependency manager) ----
+RUN pip install --no-cache-dir uv
+
+# ---- Pre-install compatible prebuilt wheels for NumPy/Pandas ----
+RUN pip install --no-cache-dir "numpy<2.0" "pandas==2.2.2"
+
+# ---- Install only the base + file_handler dependency groups ----
+RUN uv pip install --system --no-cache-dir -e . --group start_pdf_text_extraction
+
+# ---- Copy only the required source code ----
+COPY resume_analyzer/commons ./resume_analyzer/commons
+COPY resume_analyzer/lambdas/start_pdf_text_extraction ./resume_analyzer/lambdas/start_pdf_text_extraction
+
+# ---- Environment Variables ----
+ENV PYTHONUNBUFFERED=1
+ENV AWS_REGION=ap-south-1
+ENV POWERTOOLS_SERVICE_NAME=start_pdf_text_extraction
+ENV POWERTOOLS_LOG_LEVEL=INFO
+
+# ---- Set the Lambda handler ----
+CMD ["resume_analyzer.lambdas.start_pdf_text_extraction.handler.lambda_handler"]

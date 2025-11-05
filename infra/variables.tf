@@ -80,3 +80,24 @@ variable "default_tags" {
   }
 }
 
+
+
+# Container image tag for start_pdf_text_extraction Lambda
+variable "start_pdf_text_extraction_image_tag" {
+  description = "Image tag for start_pdf_text_extraction Lambda container"
+  type        = string
+  default     = "latest"
+}
+
+# Optional feature toggles for the Lambda (env)
+variable "use_analysis" {
+  description = "Use Textract StartDocumentAnalysis instead of StartDocumentTextDetection"
+  type        = bool
+  default     = false
+}
+
+variable "feature_types" {
+  description = "Textract FeatureTypes when using analysis (comma-separated: FORMS,TABLES)"
+  type        = string
+  default     = "FORMS,TABLES"
+}

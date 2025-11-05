@@ -31,3 +31,23 @@ output "api_presigned_urls_endpoint" {
   description = "POST endpoint for generating presigned URLs (hit from Streamlit)"
   value       = "https://${aws_api_gateway_rest_api.resume_api.id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_stage.dev.stage_name}/presigned-urls"
 }
+
+output "start_pdf_text_extraction_lambda_name" {
+  description = "Lambda function name for start_pdf_text_extraction"
+  value       = aws_lambda_function.start_pdf_text_extraction.function_name
+}
+
+output "start_pdf_text_extraction_lambda_arn" {
+  description = "Lambda function ARN for start_pdf_text_extraction"
+  value       = aws_lambda_function.start_pdf_text_extraction.arn
+}
+
+output "textract_jobs_queue_url" {
+  description = "URL of the SQS queue carrying Textract JobIds"
+  value       = aws_sqs_queue.textract_jobs_queue.url
+}
+
+output "textract_notifications_topic_arn" {
+  description = "SNS Topic ARN used by Textract to publish job completion events"
+  value       = aws_sns_topic.textract_notifications.arn
+}
